@@ -114,6 +114,25 @@ fn print_grid<T: GridPrint>(map: &Vec<Vec<T>>) {
     }
 }
 
+fn get_neighbor_map(map: Map) -> Vec<Vec<i32>> {
+    map.map
+        .iter()
+        .enumerate()
+        .map(|(i, row)| {
+            row.iter()
+                .enumerate()
+                .map(|(j, val)| {
+                    if *val {
+                        map.neighbors(i, j).iter().count() as i32
+                    } else {
+                        -1
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<Vec<_>>>()
+}
+
 #[allow(dead_code)]
 pub fn part1() {
     let map: Map = Map::new(read_file()).expect("Input data is not square.");
@@ -131,25 +150,7 @@ pub fn part1() {
         }
     }
 
-    let neighbor_map = map
-        .map
-        .iter()
-        .enumerate()
-        .map(|(i, row)| {
-            row.iter()
-                .enumerate()
-                .map(|(j, val)| {
-                    if *val {
-                        map.neighbors(i, j).iter().count() as i32
-                    } else {
-                        -1
-                    }
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<Vec<_>>>();
-
-    print_grid(&neighbor_map);
+    print_grid(&get_neighbor_map(map));
     println!();
 
     println!("Sum: {}", sum);
