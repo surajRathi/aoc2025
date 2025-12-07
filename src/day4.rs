@@ -114,7 +114,7 @@ fn print_grid<T: GridPrint>(map: &Vec<Vec<T>>) {
     }
 }
 
-fn get_neighbor_map(map: Map) -> Vec<Vec<i32>> {
+fn get_neighbor_map(map: &Map) -> Vec<Vec<i32>> {
     map.map
         .iter()
         .enumerate()
@@ -145,7 +145,7 @@ pub fn part1() {
         .filter(|&(i, j)| map.map[i][j] && map.accessible(i, j))
         .count();
 
-    print_grid(&get_neighbor_map(map));
+    print_grid(&get_neighbor_map(&map));
     println!();
 
     println!("Sum: {}", sum);
@@ -154,5 +154,35 @@ pub fn part1() {
 
 #[allow(dead_code)]
 pub fn part2() {
+    let mut map: Map = Map::new(read_file()).expect("Input data is not square.");
+
+    print_grid(&get_neighbor_map(&map));
+    println!();
+
+    let mut total_removed = 0;
+    loop {
+        let cells_to_remove: Vec<(usize, usize)> = (0..map.rows)
+            .flat_map(|i| (0..map.cols).map(move |j| (i, j)))
+            .filter(|&(i, j)| map.map[i][j] && map.accessible(i, j))
+            .collect();
+
+        let removed = cells_to_remove.len();
+
+        // 2. Iterate over the collected coordinates and apply the mutation.
+        // The map is now borrowed mutably and exclusively.
+        for (i, j) in cells_to_remove {
+            map.map[i][j] = false;
+        }
+
+        print_grid(&get_neighbor_map(&map));
+        println!();
+
+        total_removed += removed;
+        if removed == 0 {
+            break;
+        }
+    }
+
+    println!("Total removed: {}", total_removed);
     return;
 }
