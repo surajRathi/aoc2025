@@ -140,19 +140,19 @@ pub fn part1() {
     // print_grid(&map.map);
     // println!();
 
-    let mut sum = 0;
-
-    for (i, row) in map.map.iter().enumerate() {
-        for (j, val) in row.iter().enumerate() {
-            if *val && map.accessible(i, j) {
-                sum += 1
-            }
-        }
-    }
+    let sum = (0..map.rows)
+        .flat_map(|i| (0..map.cols).map(move |j| (i, j)))
+        .filter(|&(i, j)| map.map[i][j] && map.accessible(i, j))
+        .count();
 
     print_grid(&get_neighbor_map(map));
     println!();
 
     println!("Sum: {}", sum);
+    return;
+}
+
+#[allow(dead_code)]
+pub fn part2() {
     return;
 }
