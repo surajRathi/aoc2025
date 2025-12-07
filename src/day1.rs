@@ -22,18 +22,18 @@ fn parse_line(line: &str) -> (i32, i32) {
     let (dir, count) = line.split_at(1);
 
     (
-        match count.parse::<i32>() {
-            Err(why) => panic!("Invalid count: {}", count),
-            Ok(value) => value,
-        },
         match dir {
             "R" => 1,
             "L" => -1,
             _ => panic!("Invalid direction: {}", dir),
         },
+        match count.parse::<i32>() {
+            Err(why) => panic!("Invalid count: {}. Because: {}", count, why),
+            Ok(value) => value,
+        },
     )
 }
-
+#[allow(dead_code)]
 pub fn part1() {
     let mut idx: i32 = 50;
     let max = 99;
@@ -61,6 +61,8 @@ pub fn part1() {
     return;
 }
 
+#[allow(dead_code)]
+
 pub fn part2() {
     let mut idx: i32 = 50;
     let max = 99;
@@ -74,8 +76,15 @@ pub fn part2() {
 
         let (dir, count) = parse_line(line);
 
-        idx += dir * count;
-        idx = idx.rem_euclid(max + 1);
+        // Brute force!
+        for _ in 0..count {
+            idx += dir;
+            idx = idx.rem_euclid(max + 1);
+
+            if idx == 0 {
+                password += 1;
+            }
+        }
     }
 
     println!("Password: {}", password);
