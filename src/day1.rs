@@ -1,8 +1,6 @@
 use std::io::Read;
 
-pub fn day1() {
-    println!("Hello, world!");
-
+fn read_file() -> String {
     let path = std::path::Path::new("./data/day1.txt");
     println!("Reading {}", path.display());
 
@@ -17,36 +15,39 @@ pub fn day1() {
         Err(why) => panic!("couldn't read {}: {}", path.display(), why),
         Ok(_) => {}
     }
+    s
+}
 
+fn parse_line(line: &str) -> (i32, i32) {
+    let (dir, count) = line.split_at(1);
+
+    (
+        match count.parse::<i32>() {
+            Err(why) => panic!("Invalid count: {}", count),
+            Ok(value) => value,
+        },
+        match dir {
+            "R" => 1,
+            "L" => -1,
+            _ => panic!("Invalid direction: {}", dir),
+        },
+    )
+}
+
+pub fn part1() {
     let mut idx: i32 = 50;
     let max = 99;
 
     let mut password: i32 = 0;
 
-    for line in s.lines() {
+    for line in read_file().lines() {
         if line.len() < 2 {
             continue;
         }
 
-        let (dir, count) = line.split_at(1);
+        let (dir, count) = parse_line(line);
 
-        let count_int = match count.parse::<i32>() {
-            Err(why) => panic!("couldn't read {}: {}", path.display(), why),
-            Ok(value) => value,
-        };
-
-        let dir_int = match dir {
-            "R" => 1,
-            "L" => -1,
-            _ => panic!("Invalid direction: {}", dir),
-        };
-
-        println!(
-            "To {} Applying {} * {}. From {}",
-            idx, dir_int, count_int, line
-        );
-
-        idx += dir_int * count_int;
+        idx += dir * count;
         idx = idx.rem_euclid(max + 1);
 
         if idx == 0 {
@@ -55,6 +56,27 @@ pub fn day1() {
     }
 
     println!("Final index: {}", idx);
+
+    println!("Password: {}", password);
+    return;
+}
+
+pub fn part2() {
+    let mut idx: i32 = 50;
+    let max = 99;
+
+    let mut password: i32 = 0;
+
+    for line in read_file().lines() {
+        if line.len() < 2 {
+            continue;
+        }
+
+        let (dir, count) = parse_line(line);
+
+        idx += dir * count;
+        idx = idx.rem_euclid(max + 1);
+    }
 
     println!("Password: {}", password);
     return;
