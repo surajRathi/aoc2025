@@ -21,7 +21,11 @@ fn read_file() -> Vec<String> {
 
 fn max_jolt(s: &String) -> u128 {
     let max_first = s[..s.len() - 1].chars().into_iter().max().unwrap();
-    let max_second = s[s.find(max_first).unwrap() + 1..].chars().into_iter().max().unwrap();
+    let max_second = s[s.find(max_first).unwrap() + 1..]
+        .chars()
+        .into_iter()
+        .max()
+        .unwrap();
 
     (max_first.to_string() + &max_second.to_string())
         .parse::<u128>()
@@ -33,6 +37,37 @@ pub fn part1() {
     let sum: u128 = read_file()
         .iter()
         .map(|x| max_jolt(x))
+        .map(|x| {
+            println!("{}", x);
+            x
+        })
+        .sum();
+    println!("Sum: {}", sum);
+    return;
+}
+
+fn max_12_jolt(mut s: String) -> u128 {
+    let mut max_jolt = "".to_string();
+
+    for i in 0..12 {
+        let max = s[..s.len() - (12 - i - 1)]
+            .chars()
+            .into_iter()
+            .max()
+            .unwrap();
+        max_jolt += &max.to_string();
+
+        s = s[s.find(max).unwrap() + 1..].to_string();
+    }
+
+    max_jolt.parse::<u128>().unwrap()
+}
+
+#[allow(dead_code)]
+pub fn part2() {
+    let sum: u128 = read_file()
+        .iter()
+        .map(|x| max_12_jolt(x.to_string()))
         .map(|x| {
             println!("{}", x);
             x
