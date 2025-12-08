@@ -96,3 +96,23 @@ pub fn part1() {
 
     return;
 }
+
+#[allow(dead_code)]
+pub fn part2() {
+    let inv = read_file();
+
+    let max_fresh_id = inv.fresh.iter().max_by_key(|range| range.max).unwrap().max;
+
+    println!("Maximum fresh id size: {}", max_fresh_id);
+
+    let max_possible_fresh = (0..max_fresh_id)
+        .filter(|id| inv.fresh.iter().any(|range| range.contains(id)))
+        .count();
+
+    println!(
+        "Maximum possible number of fresh ingredients: {}",
+        max_possible_fresh
+    );
+
+    return;
+}
