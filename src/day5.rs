@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::io::Read;
 
 fn read_file() -> Inventory {
@@ -99,20 +100,48 @@ pub fn part1() {
 
 #[allow(dead_code)]
 pub fn part2() {
-    let inv = read_file();
+    let mut fresh = read_file().fresh;
 
-    let max_fresh_id = inv.fresh.iter().max_by_key(|range| range.max).unwrap().max;
-
+    let max_fresh_id = fresh.iter().max_by_key(|range| range.max).unwrap().max;
     println!("Maximum fresh id size: {}", max_fresh_id);
 
-    let max_possible_fresh = (0..max_fresh_id)
-        .filter(|id| inv.fresh.iter().any(|range| range.contains(id)))
-        .count();
+    // TODO: Making a struct sortable seems very annoying, need to implement 4 traits.
+    // fresh.sort_by(|lhs, rhs| {
+    //     if lhs.min.eq(&rhs.min) {
+    //         // Not required, but why not?
+    //         return lhs.max.cmp(&rhs.max);
+    //     }
+    //     return lhs.min.cmp(&rhs.min);
+    // });
 
-    println!(
-        "Maximum possible number of fresh ingredients: {}",
-        max_possible_fresh
-    );
+    fresh.sort_by_key(|range| range.min);
+
+    let mut count = 0usize;
+    let mut next_range = 0;
+
+    let mut active_ids: Vec<&FreshRange> = vec![];
+
+    let mut i = 0;
+    loop {
+        while next_range < fresh.len() && {
+            assert!(fresh[next_range].min >= i);
+            fresh[next_range].min == i
+        } {
+            // TODO insert sorted by the end?
+            active_ids.push(&fresh[next_range]);
+            next_range += 1;
+        }
+
+        active_ids.retain(|r: &&FreshRange| r.contains(&i));
+
+        if !active_ids.is_empty() {
+            count += 1;
+        } else {
+            i += 1; // TODO use the max in the active range?
+        }
+    }
+
+    println!("Maximum possible number of fresh ingredients: {}", count);
 
     return;
 }
