@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
+use std::fmt::Formatter;
 use std::io::Read;
-use std::thread::current;
 
 fn read_file() -> Inventory {
     let path = std::path::Path::new("./data/day5.txt");
@@ -65,6 +64,15 @@ impl FreshRange {
     }
 }
 
+impl std::fmt::Debug for FreshRange {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Range")
+            .field("min", &self.min)
+            .field("max", &self.max)
+            .finish()
+    }
+}
+
 struct Inventory {
     ids: Vec<usize>,
     fresh: Vec<FreshRange>,
@@ -111,46 +119,46 @@ pub fn part2() {
 }
 
 pub fn get_total_possible_fresh(fresh: &mut Vec<FreshRange>) -> usize {
-    let max_fresh_id = fresh.iter().max_by_key(|range| range.max).unwrap().max;
-    // println!("Maximum fresh id size: {}", max_fresh_id);
-
     fresh.sort_by_key(|range| range.min);
 
     let mut count = 0usize;
+    let mut unprocessed_ranges: &[FreshRange] = fresh;
+    let mut current = usize::MIN;
 
-    let mut fresh_left: &[FreshRange] = fresh;
-    let mut active: Vec<&FreshRange> = vec![];
+    while !unprocessed_ranges.is_empty() {
+        // If current would not be in any sets, fast-forward it to one where it would be in a set.
+        current = std::cmp::max(current, unprocessed_ranges.first().unwrap().min);
 
-    let mut current = fresh_left[0].min;
+        println!("Current: {}", current);
+        println!("Count: {}", count);
 
-    while !fresh_left.is_empty() {
-        // Add all valid sets that contain current
-        // Sort them my max value.
-        match fresh_left.binary_search_by_key(&(current + 1), |x| x.min) {
-            Ok(index) | Err(index) => {
-                for element in fresh_left[..index].iter() {
-                    match active.binary_search_by_key(&element.max, |x| x.max) {
-                        Ok(pos) | Err(pos) => active.insert(pos, element),
-                    }
-                }
+        // Extract the active ranges from the
+        let index = unprocessed_ranges.partition_point(|range| range.min <= current);
+        let active: &[FreshRange];
+        (active, unprocessed_ranges) = (unprocessed_ranges).split_at(index);
 
-                fresh_left = &fresh_left[index..];
-            }
-        };
+        println!("Active size: {}\t{:?}", active.len(), active);
+        println!(
+            "Left size: {}\t{:?}",
+            unprocessed_ranges.len(),
+            unprocessed_ranges
+        );
 
         assert!(!active.is_empty());
 
-        // increment current to one past the smallest max value.
+        // increment current to one past the largest max value.
         // update count
-        if (active[0].max >= current) {
-            count += active[0].max - current + 1;
-            current = active[0].max + 1;
+        // Get max value in active.
+        let active_max = active.iter().max_by_key(|range| range.max).unwrap().max;
+        if current <= active_max {
+            println!("Increment: {}", active_max - current + 1);
+            count += active_max - current + 1;
+            current = active_max + 1;
+        } else {
+            current += 1;
         }
 
-        // remove any sets outside of this
-        match active.binary_search_by_key(&(current), |x| x.max) {
-            Ok(index) | Err(index) => active = active[index..].to_vec(),
-        };
+        println!();
     }
 
     count
