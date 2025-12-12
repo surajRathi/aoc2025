@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::io::Read;
+use std::thread::current;
 
 fn read_file() -> Inventory {
     let path = std::path::Path::new("./data/day5.txt");
@@ -28,7 +29,7 @@ fn read_file() -> Inventory {
         }
 
         if id_section {
-            inv.ids.push(line.parse::<i64>().unwrap());
+            inv.ids.push(line.parse::<usize>().unwrap());
         } else {
             let (start, end) = line.split_once("-").expect(
                 format!(
@@ -38,8 +39,8 @@ fn read_file() -> Inventory {
                 .as_str(),
             );
             inv.fresh.push(FreshRange::new(
-                start.to_string().parse::<i64>().unwrap(),
-                end.to_string().parse::<i64>().unwrap(),
+                start.to_string().parse::<usize>().unwrap(),
+                end.to_string().parse::<usize>().unwrap(),
             ));
         }
     }
@@ -47,25 +48,25 @@ fn read_file() -> Inventory {
     inv
 }
 
-struct FreshRange {
-    min: i64,
-    max: i64,
+pub(crate) struct FreshRange {
+    min: usize,
+    max: usize,
 }
 
 impl FreshRange {
-    fn new(min: i64, max: i64) -> FreshRange {
+    pub(crate) fn new(min: usize, max: usize) -> FreshRange {
         assert!(min <= max);
         FreshRange { min, max }
     }
 
     // TODO: should i always accept elements as references?
-    fn contains(&self, val: &i64) -> bool {
+    fn contains(&self, val: &usize) -> bool {
         self.min <= *val && *val <= self.max
     }
 }
 
 struct Inventory {
-    ids: Vec<i64>,
+    ids: Vec<usize>,
     fresh: Vec<FreshRange>,
 }
 
@@ -102,46 +103,55 @@ pub fn part1() {
 pub fn part2() {
     let mut fresh = read_file().fresh;
 
-    let max_fresh_id = fresh.iter().max_by_key(|range| range.max).unwrap().max;
-    println!("Maximum fresh id size: {}", max_fresh_id);
-
-    // TODO: Making a struct sortable seems very annoying, need to implement 4 traits.
-    // fresh.sort_by(|lhs, rhs| {
-    //     if lhs.min.eq(&rhs.min) {
-    //         // Not required, but why not?
-    //         return lhs.max.cmp(&rhs.max);
-    //     }
-    //     return lhs.min.cmp(&rhs.min);
-    // });
-
-    fresh.sort_by_key(|range| range.min);
-
-    let mut count = 0usize;
-    let mut next_range = 0;
-
-    let mut active_ids: Vec<&FreshRange> = vec![];
-
-    let mut i = 0;
-    loop {
-        while next_range < fresh.len() && {
-            assert!(fresh[next_range].min >= i);
-            fresh[next_range].min == i
-        } {
-            // TODO insert sorted by the end?
-            active_ids.push(&fresh[next_range]);
-            next_range += 1;
-        }
-
-        active_ids.retain(|r: &&FreshRange| r.contains(&i));
-
-        if !active_ids.is_empty() {
-            count += 1;
-        } else {
-            i += 1; // TODO use the max in the active range?
-        }
-    }
+    let count = get_total_possible_fresh(&mut fresh);
 
     println!("Maximum possible number of fresh ingredients: {}", count);
 
     return;
+}
+
+pub fn get_total_possible_fresh(fresh: &mut Vec<FreshRange>) -> usize {
+    let max_fresh_id = fresh.iter().max_by_key(|range| range.max).unwrap().max;
+    // println!("Maximum fresh id size: {}", max_fresh_id);
+
+    fresh.sort_by_key(|range| range.min);
+
+    let mut count = 0usize;
+
+    let mut fresh_left: &[FreshRange] = fresh;
+    let mut active: Vec<&FreshRange> = vec![];
+
+    let mut current = fresh_left[0].min;
+
+    while !fresh_left.is_empty() {
+        // Add all valid sets that contain current
+        // Sort them my max value.
+        match fresh_left.binary_search_by_key(&(current + 1), |x| x.min) {
+            Ok(index) | Err(index) => {
+                for element in fresh_left[..index].iter() {
+                    match active.binary_search_by_key(&element.max, |x| x.max) {
+                        Ok(pos) | Err(pos) => active.insert(pos, element),
+                    }
+                }
+
+                fresh_left = &fresh_left[index..];
+            }
+        };
+
+        assert!(!active.is_empty());
+
+        // increment current to one past the smallest max value.
+        // update count
+        if (active[0].max >= current) {
+            count += active[0].max - current + 1;
+            current = active[0].max + 1;
+        }
+
+        // remove any sets outside of this
+        match active.binary_search_by_key(&(current), |x| x.max) {
+            Ok(index) | Err(index) => active = active[index..].to_vec(),
+        };
+    }
+
+    count
 }
