@@ -22,7 +22,7 @@ fn read_file() -> Inventory {
     let mut id_section = false;
     for (line_id, line) in s.lines().enumerate() {
         if line.trim().is_empty() {
-            println!("Section completed at {}", line_id);
+            println!("Section completed at line {}", line_id);
             id_section = true;
             continue;
         }
@@ -129,36 +129,21 @@ pub fn get_total_possible_fresh(fresh: &mut Vec<FreshRange>) -> usize {
         // If current would not be in any sets, fast-forward it to one where it would be in a set.
         current = std::cmp::max(current, unprocessed_ranges.first().unwrap().min);
 
-        println!("Current: {}", current);
-        println!("Count: {}", count);
-
         // Extract the active ranges from the
         let index = unprocessed_ranges.partition_point(|range| range.min <= current);
         let active: &[FreshRange];
         (active, unprocessed_ranges) = (unprocessed_ranges).split_at(index);
 
-        println!("Active size: {}\t{:?}", active.len(), active);
-        println!(
-            "Left size: {}\t{:?}",
-            unprocessed_ranges.len(),
-            unprocessed_ranges
-        );
-
         assert!(!active.is_empty());
 
-        // increment current to one past the largest max value.
-        // update count
-        // Get max value in active.
+        // increment current to one past the largest max value, update count
         let active_max = active.iter().max_by_key(|range| range.max).unwrap().max;
         if current <= active_max {
-            println!("Increment: {}", active_max - current + 1);
             count += active_max - current + 1;
             current = active_max + 1;
         } else {
             current += 1;
         }
-
-        println!();
     }
 
     count
