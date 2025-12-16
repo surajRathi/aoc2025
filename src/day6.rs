@@ -9,6 +9,22 @@ struct OperationData {
     func: OperationFn,
     default: u64,
 }
+
+fn parse_op_data(line: &str) -> Vec<OperationData> {
+    line.split_whitespace()
+        .map(|ch| match ch {
+            "+" => OperationData {
+                func: (u64::add as OperationFn),
+                default: 0,
+            },
+            "*" => OperationData {
+                func: u64::mul as OperationFn,
+                default: 1,
+            },
+            _ => panic!("Unknown operation type {ch}"),
+        })
+        .collect::<Vec<OperationData>>()
+}
 fn do_problem() -> Result<u64, io::Error> {
     let path = std::path::Path::new("./data/day6.txt");
     println!("Reading {}", path.display());
@@ -36,22 +52,7 @@ fn do_problem() -> Result<u64, io::Error> {
 
     type OperationFn = fn(u64, u64) -> u64;
 
-    let y = lines
-        .next()
-        .unwrap()
-        .split_whitespace()
-        .map(|ch| match ch {
-            "+" => OperationData {
-                func: (u64::add as OperationFn),
-                default: 0,
-            },
-            "*" => OperationData {
-                func: u64::mul as OperationFn,
-                default: 1,
-            },
-            _ => panic!("Unknown operation type {ch}"),
-        })
-        .collect::<Vec<OperationData>>();
+    let y = parse_op_data(lines.next().unwrap());
 
     assert!(x.iter().all(|x| x.len() == y.len()));
 
@@ -89,22 +90,7 @@ fn do_problem_2() -> Result<u64, io::Error> {
 
     type OperationFn = fn(u64, u64) -> u64;
 
-    let y = lines
-        .next()
-        .unwrap()
-        .split_whitespace()
-        .map(|ch| match ch {
-            "+" => OperationData {
-                func: (u64::add as OperationFn),
-                default: 0,
-            },
-            "*" => OperationData {
-                func: u64::mul as OperationFn,
-                default: 1,
-            },
-            _ => panic!("Unknown operation type {ch}"),
-        })
-        .collect::<Vec<OperationData>>();
+    let y = parse_op_data(lines.next().unwrap());
 
     assert!(x.iter().all(|x| x.len() == y.len()));
 
@@ -124,13 +110,15 @@ fn parse_rtl_columns(string: Vec<&&str>) -> Vec<u64> {
     }
 
     let max_len = string.iter().map(|s| s.len()).max().unwrap();
-
-    (max_len - 1..=0)
+    // println!("Parsing: {string:?} with maxlen {max_len}");
+    (0..max_len)
+        .rev()
         .map(|i| {
             string
                 .iter()
                 .filter_map(|s| {
                     if i < s.len() {
+                        // println!("{i}: {}", s[i..=i].to_string());
                         Some(s[i..=i].to_string())
                     } else {
                         None
@@ -138,6 +126,10 @@ fn parse_rtl_columns(string: Vec<&&str>) -> Vec<u64> {
                 })
                 .collect::<Vec<String>>()
                 .join("")
+        })
+        .map(|s| {
+            println!("{s}, {}", s.parse::<u64>().unwrap());
+            s
         })
         .map(|s| s.parse::<u64>().unwrap())
         .collect()
