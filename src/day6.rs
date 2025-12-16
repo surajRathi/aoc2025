@@ -60,7 +60,7 @@ fn do_problem() -> Result<u64, io::Error> {
 
     let x = lines
         .by_ref()
-        .take(4)
+        .take_while(|l| !(l.trim()).is_empty() && try_parse_op_data(&(*l).trim()[0..=0]).is_none())
         .map(|line| {
             line.split_whitespace()
                 .map(|s| {
