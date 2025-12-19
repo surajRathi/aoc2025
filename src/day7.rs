@@ -21,8 +21,6 @@ fn parse_file(data: &String) -> Result<World, String> {
         .next()
         .ok_or_else(|| "Data has no lines.".to_string())?;
 
-    // let source_index = ;
-
     let mut world = World::new(
         source_line.len(),
         source_line.chars().position(|c| c == 'S').ok_or_else(|| {
@@ -77,5 +75,31 @@ pub fn part1() {
         .and_then(|s| parse_file(&s))
         .expect("File parsing failed");
 
-    println!("{:?}", world.world);
+    let mut active_rays = std::collections::HashSet::new();
+    active_rays.insert(world.source_col);
+
+    let mut num_splits = 0u128;
+
+    for splitter_row in &world.world {
+        let mut next_active_rays = std::collections::HashSet::new();
+
+        for ray in &active_rays {
+            if splitter_row.contains(ray) {
+                num_splits += 1;
+                if *ray > 0 {
+                    next_active_rays.insert(ray - 1);
+                }
+
+                if *ray + 1 < world.cols {
+                    next_active_rays.insert(ray + 1);
+                }
+            } else {
+                next_active_rays.insert(*ray);
+            }
+        }
+
+        // TODO: Print row + activepar
+        active_rays = next_active_rays;
+    }
+    println!("Number of splits: {}", num_splits);
 }
