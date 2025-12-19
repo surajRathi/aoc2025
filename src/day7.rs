@@ -69,37 +69,41 @@ impl World {
     }
 }
 
-pub fn part1() {
+pub fn solution() {
     let world = read_file()
         .map_err(|e| e.to_string())
         .and_then(|s| parse_file(&s))
         .expect("File parsing failed");
 
-    let mut active_rays = std::collections::HashSet::new();
-    active_rays.insert(world.source_col);
+    let mut active_rays = std::collections::HashMap::new();
+    active_rays.insert(world.source_col, 1u128);
 
     let mut num_splits = 0u128;
 
     for splitter_row in &world.world {
-        let mut next_active_rays = std::collections::HashSet::new();
+        let mut next_active_rays = std::collections::HashMap::new();
 
-        for ray in &active_rays {
-            if splitter_row.contains(ray) {
+        for (ray_id, ray_count) in &active_rays {
+            if splitter_row.contains(ray_id) {
                 num_splits += 1;
-                if *ray > 0 {
-                    next_active_rays.insert(ray - 1);
+                if *ray_id > 0 {
+                    *next_active_rays.entry(ray_id - 1).or_insert(0) += ray_count;
                 }
 
-                if *ray + 1 < world.cols {
-                    next_active_rays.insert(ray + 1);
+                if *ray_id + 1 < world.cols {
+                    *next_active_rays.entry(ray_id + 1).or_insert(0) += ray_count;
                 }
             } else {
-                next_active_rays.insert(*ray);
+                *next_active_rays.entry(*ray_id).or_insert(0) += ray_count;
             }
         }
 
-        // TODO: Print row + activepar
+        // TODO: Print row + active rays
         active_rays = next_active_rays;
     }
     println!("Number of splits: {}", num_splits);
+
+    let total_universes: u128 = active_rays.iter().map(|(_, count)| *count).sum();
+
+    println!("Number of universes: {}", total_universes);
 }
